@@ -1,4 +1,4 @@
-from domain.ports import Clock
+from domain.ports.ports import Clock
 from datetime import datetime, timezone
 
 class SystemClock(Clock):

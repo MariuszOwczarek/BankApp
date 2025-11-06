@@ -1,6 +1,6 @@
 from typing import Protocol
-from domain.entities import Account
-from domain.entities import Transaction
+from domain.entities.entities import Account
+from domain.entities.entities import Transaction
 from decimal import Decimal
 from datetime import datetime
 

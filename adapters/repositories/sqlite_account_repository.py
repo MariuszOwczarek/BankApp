@@ -1,5 +1,5 @@
-from domain.ports import AccountRepository
-from domain.entities import Account
+from domain.ports.ports import AccountRepository
+from domain.entities.entities import Account
 from decimal import Decimal
 from domain.errors import DomainError, AccountAlreadyExists, AccountNotFound
 from sqlalchemy.orm import Session 
@@ -7,7 +7,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError as SAIntegrityError
 from datetime import datetime, timezone
 from domain.types.account_status import AccountStatus
-from domain.types.type_currency import CurrencyType
+from domain.types.currency import CurrencyType
 
 
 class SqliteAccountRepository(AccountRepository):

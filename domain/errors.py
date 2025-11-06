@@ -15,3 +15,4 @@ class AccountAlreadyExists(DomainError):
 
 class TransactionAlreadyExists(DomainError):
     ...
+

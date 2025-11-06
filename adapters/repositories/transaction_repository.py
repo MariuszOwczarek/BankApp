@@ -1,12 +1,12 @@
-from domain.ports import TransactionRepository
+from domain.ports.ports import TransactionRepository
 from sqlalchemy.orm import Session
-from domain.entities import Transaction
+from domain.entities.entities import Transaction
 from sqlalchemy.exc import IntegrityError as SAIntegrityError
 from domain.errors import DomainError, TransactionAlreadyExists, AccountNotFound
 from sqlalchemy import text
 from decimal import Decimal
-from domain.types.type_currency import CurrencyType
-from domain.types.type_transaction import TransactionType
+from domain.types.currency import CurrencyType
+from domain.types.transaction import TransactionType
 from datetime import datetime
 
 class TransactionsRepository(TransactionRepository):

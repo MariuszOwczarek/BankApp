@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
-from domain.types.type_transaction import TransactionType
-from domain.types.type_currency import CurrencyType
+from domain.types.transaction import TransactionType
+from domain.types.currency import CurrencyType
 from domain.types.account_status import AccountStatus
 
 @dataclass(frozen=True)
