@@ -15,13 +15,9 @@ Projekt pokazuje:
 
 1. [Technologie](#technologie)
 2. [Struktura projektu](#struktura-projektu)
-3. [Model domeny](#model-domeny)
-4. [Ports & Adapters](#ports--adapters)
-5. [Use-case’y](#use-casey)
-6. [CLI](#cli)
-7. [Baza danych](#baza-danych)
-8. [Testy / sandbox](#testy--sandbox)
-9. [Jak rozwijać dalej](#jak-rozwijać-dalej)
+3. [Use-case’y](#use-casey)
+4. [CLI](#cli)
+
 
 ---
 
