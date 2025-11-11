@@ -1,146 +1,118 @@
-```markdown
-# 🏦 Bank System — Hexagonal Architecture (Python)
+# Mini Bank 🏦 (Hexagonal Architecture + CLI)
 
-A small educational **banking system** built in **Python**, following the principles of **Hexagonal Architecture (Ports & Adapters)**.  
-The goal of this project is to clearly separate the **domain**, **application**, and **infrastructure** layers while keeping the core logic independent of frameworks and databases.
+Mały, edukacyjny system bankowy napisany w Pythonie, zaprojektowany w stylu **Hexagonal Architecture (Ports & Adapters)**.
 
----
-
-## 📚 Features
-
-- Create and manage accounts (`create_account`)
-- Deposit and withdraw money (`deposit`, `withdraw`)
-- Transfer funds between accounts (`transfer`)
-- Get balance and view transaction history
-- Persistent storage in **SQLite**
-- Rich CLI interface (Typer + Rich planned)
-- Config-driven setup (`config.toml`)
+Projekt pokazuje:
+- jak oddzielić **domenę** od **infrastruktury**,
+- jak pisać **use-case’y** jako czystą logikę aplikacyjną,
+- jak korzystać z **portów/repozytoriów** zamiast twardych zależności,
+- jak zbudować **CLI (Typer + Rich)** na szczycie heksagonu,
+- jak utrzymywać **stan (accounts)** + **historię (transactions)** i wersjonowanie rekordów.
 
 ---
 
-## 🧩 Architecture Overview
+## Spis treści
 
-```
+1. [Technologie](#technologie)
+2. [Struktura projektu](#struktura-projektu)
+3. [Model domeny](#model-domeny)
+4. [Ports & Adapters](#ports--adapters)
+5. [Use-case’y](#use-casey)
+6. [CLI](#cli)
+7. [Baza danych](#baza-danych)
+8. [Testy / sandbox](#testy--sandbox)
+9. [Jak rozwijać dalej](#jak-rozwijać-dalej)
 
+---
+
+## Technologie
+
+- Python 3.12+
+- SQLite
+- SQLAlchemy (core, bez ORM)
+- Typer – CLI
+- Rich – kolorowy output
+- `dataclasses`, `Decimal`, `Enum`
+
+---
+
+## Struktura projektu
+
+```bash
 project_root/
-├── domain/                # Core business logic
-│   ├── entities/          # Account, Transaction (pure dataclasses)
-│   ├── ports/             # Interfaces (Repository, Clock, IdProvider, etc.)
-│   ├── errors.py          # Domain exceptions
-│   └── types/             # Enums (CurrencyType, TransactionType, etc.)
+├── domain/                # Core biznesu (zero zależności od infrastruktury)
+│   ├── entities/          # Account, Transaction
+│   ├── ports/             # Porty (AccountRepository, TransactionRepository, Clock, IdProvider)
+│   ├── types/             # Enums (CurrencyType, TransactionType, AccountStatus, ...)
+│   └── errors.py          # Błędy domenowe
 │
-├── application/           # Use-cases (CreateAccount, Deposit, etc.)
+├── application/           # Use-case’y (logika aplikacyjna)
+│   ├── dto/               # Request/Response DTO (komendy + wyniki)
+│   ├── use_cases/         # CreateAccount, Deposit, Withdraw, Transfer, GetBalance, ListTransactions
+│   └── errors.py          # Błędy warstwy aplikacyjnej (aliasy/wrappery domeny)
 │
-├── adapters/              # Infrastructure
-│   ├── repositories/      # SQLite repositories
-│   ├── id_provider/       # UUID/ULID generator
-│   ├── clock/             # SystemClock adapter
-│   └── cli/               # Typer CLI (planned)
+├── adapters/              # Infrastruktura
+│   ├── repositories/
+│   │   ├── sqlite_account_repository.py   # implementacja AccountRepository
+│   │   └── transaction_repository.py      # implementacja TransactionRepository
+│   ├── clock/
+│   │   └── system_clock.py                # Clock → datetime.now(tz=UTC)
+│   ├── id_provider/
+│   │   └── id_provider.py                 # UUIDIdProvider (generate_id)
+│   └── cli/
+│       └── main.py                        # Typer + Rich CLI
 │
-├── config/                # Configuration (TOML, env variables)
+├── config/
+│   └── config.py          # Ścieżki, ustawienia (np. db path)
 │
-├── db.py                  # SQLite schema & session setup
-├── requirements.txt       # Dependencies
+├── db.py                  # Inicjalizacja SQLite, tabele, SessionLocal
+├── test/
+│   └── tests.py           # Sandbox / scenariusz integracyjny
+├── requirements.txt
 └── README.md
 
-````
+CLI
+Plik: adapters/cli/main.py
+Uruchamianie (z katalogu głównego projektu):
+python -m adapters.cli.main --help
 
----
 
-## ⚙️ Setup
+Komendy
+1. Utworzenie konta
+python -m adapters.cli.main create-account \
+  --owner "Alice" \
+  --currency PLN \
+  --initial 100.00
 
-### 1️⃣ Create and activate a virtual environment
-```bash
-python -m venv .venv
-source .venv/bin/activate     # macOS/Linux
-# or
-.venv\Scripts\activate        # Windows
-````
+2. Wpłata
+python -m adapters.cli.main deposit \
+  --account-id <ACCOUNT_ID> \
+  --amount 50.00 \
+  --note "salary"
 
-### 2️⃣ Install dependencies
+3. Wypłata
+python -m adapters.cli.main withdraw \
+  --account-id <ACCOUNT_ID> \
+  --amount 20.00 \
+  --note "atm"
 
-```bash
-pip install -r requirements.txt
-```
 
-If you don’t have a `requirements.txt` yet, create one later with:
+4. Przelew
+python -m adapters.cli.main transfer \
+  --from <FROM_ACCOUNT_ID> \
+  --to <TO_ACCOUNT_ID> \
+  --amount 30.00 \
+  --note "rent"
 
-```bash
-pip freeze > requirements.txt
-```
+5. Saldo
+python -m adapters.cli.main balance \
+  --account-id <ACCOUNT_ID>
 
----
+6. Historia transakcji
+python -m adapters.cli.main transactions \
+  --account-id <ACCOUNT_ID> \
+  --limit 50
 
-## 🧠 Database Initialization
 
-SQLite database file is configured in `config/config.py` (variable `SQLITE_PATH`).
 
-When you run `db.py`, it automatically:
 
-* creates the `accounts` and `transactions` tables,
-* enables `PRAGMA foreign_keys`,
-* sets journal mode to `WAL`.
-
-To initialize manually:
-
-```bash
-python db.py
-```
-
----
-
-## 🧪 Testing (soon)
-
-Planned structure:
-
-```
-tests/
-├── unit/            # pure domain tests
-└── integration/     # SQLite repository + use-case tests
-```
-
-Example (pytest style):
-
-```bash
-pytest -v
-```
-
----
-
-## 🧭 Next Steps
-
-* Implement use-cases in `application/`:
-
-  * `CreateAccountUseCase`
-  * `DepositUseCase`
-  * `WithdrawUseCase`
-  * `TransferUseCase`
-* Add CLI (Typer + Rich)
-* Write integration tests for repositories
-
----
-
-## 🧰 Tech Stack
-
-| Area         | Technology                      |
-| ------------ | ------------------------------- |
-| Language     | Python 3.11+                    |
-| DB           | SQLite (SQLAlchemy Core)        |
-| CLI          | Typer + Rich (planned)          |
-| Architecture | Hexagonal / Ports & Adapters    |
-| ORM          | SQLAlchemy Core (no ORM models) |
-
----
-
-## 👤 Author
-
-Created by **[Mariusz Owczarek]**
-Learning and implementing clean architecture with Python step by step.
-
----
-
-## 📄 License
-
-MIT License — free to use, modify, and learn from.
-
-```

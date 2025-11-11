@@ -27,7 +27,7 @@ class SqliteAccountRepository(AccountRepository):
             'account_id' : account.account_id,
             'owner_name' : account.owner_name,
             'currency' : account.currency.value,
-            'balance' : account.balance,
+            'balance' : str(account.balance) if isinstance(account.balance, Decimal) else account.balance,
             'created_at' : account.created_at.isoformat(),
             'updated_at': account.updated_at.isoformat(),
             'status' : account.status.value,
@@ -35,8 +35,7 @@ class SqliteAccountRepository(AccountRepository):
         }
 
         try:
-            with self._session.begin():
-                self._session.execute(text(create_account_entity_sql), params)
+            self._session.execute(text(create_account_entity_sql), params)
         except SAIntegrityError as e:
             message = str(e.orig)
             if "UNIQUE constraint failed" in message and "accounts.account_id" in message:
@@ -84,6 +83,37 @@ class SqliteAccountRepository(AccountRepository):
         )
 
 
+    def get_by_id(self, account_id: str) -> Account | None:
+        """Zwraca konto lub None, nie rzuca wyjątku domenowego."""
+        get_account_entity_sql = """
+            SELECT
+                account_id,
+                owner_name,
+                currency,
+                balance,
+                created_at,
+                updated_at,
+                status
+            FROM accounts
+            WHERE account_id = :account_id
+        """
+        result = self._session.execute(text(get_account_entity_sql), {"account_id": account_id})
+        row = result.mappings().fetchone()
+        if not row:
+            return None
+
+        return Account(
+            account_id=row["account_id"],
+            owner_name=row["owner_name"],
+            currency=CurrencyType(row["currency"]),
+            balance=Decimal(row["balance"]),
+            created_at=datetime.fromisoformat(row["created_at"]),
+            updated_at=datetime.fromisoformat(row["updated_at"]),
+            status=AccountStatus(row["status"]),
+        )
+
+
+
     def update_balance(self, account_id: str, new_balance: Decimal) -> None:
         """Aktualizuje saldo i znacznik czasu konta."""
 
@@ -97,15 +127,14 @@ class SqliteAccountRepository(AccountRepository):
         """
 
         params = {
-            "balance": new_balance,
-            "updated_at": datetime.now(timezone.utc).isoformat(),  # lub Clock.now() przekazany wyżej
+            "balance": str(new_balance) if isinstance(new_balance, Decimal) else new_balance,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
             "account_id": account_id,
         }
 
-        with self._session.begin():
-            result = self._session.execute(text(update_account_sql), params)
-            if result.rowcount == 0:
-                raise AccountNotFound(f"Account with id={account_id} not found")
+        result = self._session.execute(text(update_account_sql), params)
+        if result.rowcount == 0:
+            raise AccountNotFound(f"Account with id={account_id} not found")
 
 
     def list_all(self, limit: int | None = None) -> list[Account]:

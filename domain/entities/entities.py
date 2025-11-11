@@ -22,6 +22,6 @@ class Transaction:
     account_id: str
     amount: Decimal
     currency: CurrencyType
-    created_at: datetime
-    related_account_id: str | None = None # up to decission
-    note: str | None = None # up to decission
+    occurred_at: datetime
+    related_account_id: str | None = None
+    note: str | None = None
